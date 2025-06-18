@@ -74,18 +74,16 @@ streamlit run app.py
 ## 📁 Project Structure
 
 ```
-voicebot/
-│
-├── app.py                # Main application logic
-├── agents/               # LangChain agent setup
-├── services/
-│   ├── stt.py            # Speech-to-text logic
-│   ├── tts.py            # Text-to-speech logic
-│   └── llama_chain.py    # LangChain + GROQ setup
-├── templates/            # (Optional) HTML for web interface
-├── static/               # JS/CSS files
-├── .env                  # Environment variables
-└── requirements.txt
+Voice_chatbot/
+├── README.md              # Project overview and setup guide
+├── requirements.txt       # Python dependencies
+├── .env                   # Environment variables (e.g., API keys)
+├── demovideo.mp4          # Demo video of the chatbot in action
+├── src/                   # Source code
+│   ├── app/               # Main application logic
+│   └── utils/             # Utility modules
+│   
+
 ```
 
 ---
