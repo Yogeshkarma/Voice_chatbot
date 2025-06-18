@@ -1,53 +1,41 @@
 import os
 from dotenv import load_dotenv
-
-import pyaudio
 import streamlit as st
 from langchain.memory import ConversationBufferMemory
 
-from utils import record_audio_chunk, transcribe_audio, get_response_llm, play_text_to_speech, load_whisper
+from utils import transcribe_audio, get_response_llm, play_text_to_speech, load_whisper
 
 load_dotenv()
 
-chunk_file = 'temp_audio_chunk.wav'
+st.set_page_config(page_title="Voice Bot", layout="centered")
+st.markdown('<h1 style="color: darkblue;">🎙️ Voice Bot</h1>', unsafe_allow_html=True)
+
 model = load_whisper()
-def main():
-    st.markdown('<h1 style="color: darkblue;">Voice Bot️</h1>', unsafe_allow_html=True)
+memory = ConversationBufferMemory(memory_key="chat_history")
 
-    memory = ConversationBufferMemory(memory_key="chat_history")
+# Upload a WAV audio file
+uploaded_file = st.file_uploader("Upload a voice recording (.wav only)", type=["wav"])
 
-    if st.button("Start Recording"):
-        while True:
-            # Audio Stream Initialization
-            audio = pyaudio.PyAudio()
-            stream = audio.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=1024)
+if uploaded_file is not None:
+    # Save the uploaded file temporarily
+    temp_path = "temp_audio.wav"
+    with open(temp_path, "wb") as f:
+        f.write(uploaded_file.read())
 
-            # Record and save audio chunk
-            record_audio_chunk(audio, stream)
+    # Transcribe audio
+    text = transcribe_audio(model, temp_path)
 
-            text = transcribe_audio(model, chunk_file)
+    if text:
+        st.markdown(f"<div style='background-color:#eee;padding:10px;border-radius:5px;'>👤 User: {text}</div>", unsafe_allow_html=True)
 
-            if text is not None:
-                st.markdown(
-                    f'<div style="background-color:grey ; padding: 10px; border-radius: 5px;"> User 👤: {text}</div>',
-                    unsafe_allow_html=True)
+        # Get LLM response
+        response_llm = get_response_llm(user_question=text, memory=memory)
 
-                os.remove(chunk_file)
+        st.markdown(f"<div style='background-color:#dfe6e9;padding:10px;border-radius:5px;'>🤖 Bot: {response_llm}</div>", unsafe_allow_html=True)
 
-                response_llm = get_response_llm(user_question=text, memory=memory)
-                st.markdown(
-                    f'<div style="background-color:grey ; padding: 10px; border-radius: 5px;">Bot 🤖: {response_llm}</div>',
-                    unsafe_allow_html=True)
+        # Speak response
+        play_text_to_speech(response_llm)
 
-                play_text_to_speech(text=response_llm)
-            else:
-                stream.stop_stream()
-                stream.close()
-                audio.terminate()
-                break  # Exit the while loop
-        print("End Conversation")
-
-
-
-if __name__ == "__main__":
-    main()  
+        os.remove(temp_path)
+    else:
+        st.warning("Could not understand the audio. Please try again.")
